@@ -397,10 +397,11 @@ service_uevq(struct list_head *tmpq)
 
 static void uevent_cleanup(void *arg)
 {
-	struct udev *udev = arg;
+	struct udev **pudev = arg;
 
+	if (*pudev)
+		udev_unref(*pudev);
 	condlog(3, "Releasing uevent_listen() resources");
-	udev_unref(udev);
 }
 
 static void monitor_cleanup(void *arg)
@@ -560,7 +561,7 @@ int uevent_listen(struct udev *udev)
 		return 1;
 	}
 	udev_ref(udev);
-	pthread_cleanup_push(uevent_cleanup, udev);
+	pthread_cleanup_push(uevent_cleanup, &udev);
 
 	monitor = udev_monitor_new_from_netlink(udev, "udev");
 	if (!monitor) {
